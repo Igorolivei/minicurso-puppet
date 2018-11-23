@@ -1,0 +1,49 @@
+require 'yaml'
+
+Vagrant.require_version '>= 2.0.1'
+vagrant_root = File.dirname(__FILE__)
+
+required_plugins = ['vagrant-hosts']
+required_plugins.each do |plugin|
+  raise "Run \'vagrant plugin install #{plugin}\'" unless Vagrant.has_plugin? plugin
+end
+
+Vagrant.configure('2') do |config|
+  config.vm.provision :hosts do |provisioner|
+    provisioner.autoconfigure = true
+    provisioner.sync_hosts = true
+    provisioner.add_localhost_hostnames = false
+  end
+
+  config.vm.define 'master' do |n|
+    memory = 2048
+    cpus = 1
+    network_address = "172.22.0.100"
+
+    n.vm.provider 'virtualbox' do |v|
+      v.customize ['modifyvm', :id, '--ioapic', 'on']
+      v.customize ['modifyvm', :id, '--audio', 'none']
+      v.memory = memory
+      v.cpus = cpus
+    end
+
+    n.vm.box = 'centos/7'
+    n.vm.network :private_network, ip: network_address
+  end
+
+  config.vm.define 'node' do |n|
+    memory = 512
+    cpus = 1
+    network_address = "172.22.0.101"
+
+    n.vm.provider 'virtualbox' do |v|
+      v.customize ['modifyvm', :id, '--ioapic', 'on']
+      v.customize ['modifyvm', :id, '--audio', 'none']
+      v.memory = memory
+      v.cpus = cpus
+    end
+
+    n.vm.box = 'centos/7'
+    n.vm.network :private_network, ip: network_address
+  end
+end
