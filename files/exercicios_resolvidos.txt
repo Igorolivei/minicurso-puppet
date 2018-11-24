@@ -1,0 +1,37 @@
+# Exercicio bolt
+
+## Instalar o Bolt
+
+rpm -Uvh https://yum.puppet.com/puppet5/puppet5-release-el-7.noarch.rpm
+yum install puppet-bolt
+
+## Configurar o acesso ssh
+ssh-keygen
+// No Node adicionar a chave .pub ao .ssh/authorized_keys
+
+## Adicionar Puppet ao $path
+export PATH=$PATH:/opt/puppetlabs/bin
+
+## Execute comandos no node
+bolt command run 'echo $HOME' --nodes root@node # --private-key .ssh/id_rsa
+
+## Instal o pacote e inicie o serviço
+bolt task run package::linux action=install name=httpd --nodes root@node
+bolt task run service::linux action=start name=httpd --nodes root@node
+
+// Entre no node e confira se o serviço está rodando, ou execute um `curl http://node:80`
+
+# Exercicio 1 Master/Agent
+
+## Instalar o Server
+rpm -Uvh https://yum.puppet.com/puppet5/puppet5-release-el-7.noarch.rpm
+yum install puppetserver
+vi /etc/sysconfig/puppetserver => setar -Xms512m -Xmx1g
+systemctl restart puppetserver
+
+## Instalar o agente no node
+bolt task run puppet_agent::install collection=puppet5 --nodes root@node
+// executar puppet agent -t no node
+bolt command run 'puppet agent -t' --nodes root@node
+puppet cert list
+puppet cert sign node
