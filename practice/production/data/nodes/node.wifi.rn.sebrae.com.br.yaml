@@ -1,0 +1,2 @@
+meu_texto: 'meu novo valor'
+apache::package_name: 'httpd'

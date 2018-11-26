@@ -1,0 +1,53 @@
+# Exercicio bolt
+
+## Instalar o Bolt
+
+`rpm -Uvh https://yum.puppet.com/puppet5/puppet5-release-el-7.noarch.rpm`
+`yum install puppet-bolt`
+
+## Configurar o acesso ssh
+ssh-keygen
+// No Node adicionar a chave .pub ao .ssh/authorized_keys
+
+## Adicionar Puppet ao $path
+export PATH=$PATH:/opt/puppetlabs/bin
+
+## Execute comandos no node
+`bolt command run 'echo $HOME' --nodes root@node # --private-key .ssh/id_rsa`
+
+## Instal o pacote e inicie o serviço
+`bolt task run package::linux action=install name=httpd --nodes root@node`
+`bolt task run service::linux action=start name=httpd --nodes root@node`
+
+// Entre no node e confira se o serviço está rodando, ou execute um `curl http://node:80`
+
+# Exercicio 1 Master/Agent
+
+## Instalar o Server
+`rpm -Uvh https://yum.puppet.com/puppet5/puppet5-release-el-7.noarch.rpm`
+`yum install puppetserver`
+`vi /etc/sysconfig/puppetserver // setar -Xms512m -Xmx1g`
+`systemctl restart puppetserver`
+
+## Instalar o agente no node
+`bolt task run puppet_agent::install collection=puppet5 --nodes root@node`
+// Ler tópico abaixo, sobre configurações do Agente Puppet
+`puppet agent -t // executar puppet agent -t NO NODE`
+
+`puppet cert list // lista todas as requisições de certificado NO MASTER`
+`puppet cert sign node // assinar o certificado NO MASTER`
+
+## Configurações do Agente
+Antes de executar o agente pela primeira vez, deve-se verificar qual o nome da máquina Master.
+
+O Agente precisa chegar no Master pelo FQDN. Por padrão, ele espera que o Master tenha o FQDN `Puppet`;
+
+Para mudar essa configuração, no Node (máquina do agente) altere o arquivo `/etc/puppetlabs/puppet/puppet.conf`, e adicione o seguinte:
+
+```
+[main]
+server=example.puppet.com
+```
+
+Após isso, o Agente está pronto para ser executado e gerar o certificado.
+Caso você execute o `puppet agent -t` antes de fazer essa alteração, basta remover o diretório `/etc/puppetlabs/puppet/ssl` e executar o agente novamente. Isso irá remover os certificados que foram gerados apontando para um servidor inexistente (o nome estava errado) e regerar com as configurações corretas.
